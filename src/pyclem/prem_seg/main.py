@@ -14,17 +14,17 @@ from pyclem.utils import mrcnn_preprocess, mrcnn_postprocess
 # Parameters for PR_segmentation.py:
 #################################################
 # Initial directory for file dialog (your general data directory e.g. L-drive)
-startdir = r'/mnt/storage/data/prem/20250226_gb1_D1-D2/mdamb231_pitstop2_D1D2/'  # e.g. r'L:/AA_AMA/data'
+startdir = r'/mnt/'  
 # Root directory of your local pyclem repository
 root_dir = r'/home/michalakdj/src/pyclem'  # "PATH/to/your/pyclem/repository"
 # Path to trained weights file
 model_path = r'/mnt/storage/data/prem/models/mrcnn_pr_clathrin_v1.h5'
 # Regular expression pattern to pick file used for evaluation or training
-EM_file_pattern = r'^.*cell\d{3}.*_inv\.tif$'
-#EM_filt_pattern = r'^.*cell\d{3}.*_inv\.tif$'  # e.g. r'^.*cell\d{3}.*_inv\.tif$' corresponds to '***cell012***_inv.tif'
+#EM_file_pattern = r'^.*cell\d{3}.tif$'
+EM_file_pattern = r'^.*cell\d{3}.*_inv\.tif$'  # e.g. r'^.*cell\d{3}.*_inv\.tif$' corresponds to '***cell012***_inv.tif'
 
 # Decide if you want to delete individual image tiles after processing
-delete_tiles = True
+delete_tiles = False 
 # Tell Mask R-CNN what to do
 command = 'evaluate'  # 'train' or 'evaluate'
 # Regular expression pattern to load tiled images
@@ -99,6 +99,7 @@ def main():
         print('Run Mask R-CNN pre-processing!')
         mrcnn_preprocess(files=filenames, tile_size=tile_size, tile_overlap=tile_overlap, px_size_mrcnn=pixelsize_mrcnn,
                          contrast_limits=c_limit, parent_folder=parent_dir, tile_dir=tile_dir_name)
+        print('Done with pre-processing.')
     elif command == 'train':
         # Todo: Adapt mrcnn_prep_trainingdata to work with the new folder structure!
         print('Run Mask R-CNN preparation of training data!')
@@ -154,7 +155,7 @@ def main():
 
     # If used for evaluation, perform post-processing to reassemble whole segmentation mask
     if command == 'evaluate':
-        print('Run Mask R-CNN post-processing!')
+        print('Running Mask R-CNN post-processing!')
         mrcnn_postprocess(files=filenames, px_size_mrcnn=pixelsize_mrcnn, tile_size=tile_size,
                           tile_overlap=tile_overlap, min_feature_size=min_feature_size, parent_folder=parent_dir,
                           result_folder=result_dir_name)

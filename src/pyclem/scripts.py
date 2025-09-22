@@ -130,7 +130,7 @@ def batch_apply_cellmask(analysis_dir: Union[str, Path],
 
 
 def batch_get_stats(analysis_dir: Union[str, Path],
-                    pattern: str = r'\d{8}.*cell\d{3}_inv\.tif',
+                    pattern: str = r'.*cell\d{3}_inv\.tif',
                     do_feature_stats: bool = True,
                     do_mrcnn_stats: bool = False,
                     do_brightness_stats: bool = False,
@@ -382,6 +382,7 @@ def move_files_to_dest(pattern: str, source: Union[str, Path] = Path(), destinat
     files, _ = get_files(pattern=pattern, subdir=source, id_dict=id_dict)
     for file in files:
         # Make sure file is a Path() object
+        print(file.stem)
         file = Path(file)
         # Prepare absolute path for file
         old_name = Path(source, file)
