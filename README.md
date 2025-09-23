@@ -46,8 +46,12 @@ Make sure to install all required tools before proceeding with the installation 
     ```
     git clone https://git.lobos.nih.gov/taraskalab/pyclem.git
     ```
+    or
+    ```
+    git clone https://github.com/andreasmarnold/pyclem.git
+    ```
 
-2. In Conda-prompt:
+3. In Conda-prompt:
    - Create a new virtual environment with Python>=3.10
     ```ruby
     conda create -y -n pyclem-env python=3.10
