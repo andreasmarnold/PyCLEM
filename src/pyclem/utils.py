@@ -9,6 +9,7 @@ from typing import Union, Tuple
 import numpy as np
 import pandas as pd
 import tifffile
+from aicsimageio import AICSImage
 from PIL import Image
 from scipy.ndimage import binary_fill_holes
 from scipy.spatial.distance import cdist
@@ -377,7 +378,8 @@ def mask_to_shapes(mask: np.ndarray, rho: float = 1/10) -> pd.DataFrame:
             # Note: Up to here, contours were closed polygons (i.e., last point = first point)
             #       --> Remove last point to avoid duplicate points in the final shape
             if (contour[0, :] == contour[-1, :]).all():
-                shapes.append(contour[:-1, :] + offset)
+                if len(contour[:-1, :] + offset) > 2:
+                    shapes.append(contour[:-1, :] + offset)
 
         # Prepare arrays with information for every shape vertex (e.g., shape type, vertex-index, ...)
         shape_types = np.concatenate([['polygon' for vertice in shape] for shape in shapes], axis=0)
@@ -388,7 +390,7 @@ def mask_to_shapes(mask: np.ndarray, rho: float = 1/10) -> pd.DataFrame:
         # Store all information in Pandas DataFrame
         shape_data = pd.DataFrame({new_list: entry for new_list, entry in
                                    zip(['index', 'shape-type', 'vertex-index', 'axis-0', 'axis-1'],
-                                       [shape_indices, shape_types, vertex_indices, shapes[:, 0], shapes[:, 1]])})
+                                       [shape_indices.astype(int), shape_types, vertex_indices.astype(int), shapes[:, 0], shapes[:, 1]])})
         return shape_data
 
 
@@ -588,6 +590,11 @@ def mrcnn_preprocess(files: Union[list, str, Path],
         files = list([files])
     # Loop over all files
     for file in files:
+        # check if the image was already preprocessed by seeing if there is a segprotocol.txt
+        if Path(file[:-4]+"_segprotocol.txt").exists():
+            print(f"Found {file[:-4]}_segprotocol.txt so it is assumed that the image has already be preprocessed.")
+            continue
+         
         print('Splitting image into tiles for  ' + str(file))
         # make file a absolute Path object
         file = Path(parent_folder, file)
@@ -977,29 +984,37 @@ def mrcnn_get_2d_pixelsize(filename: Union[str, Path]):
         # return default
         return 1.
 
-    # Open TIFF file
-    with tifffile.TiffFile(filename) as tiff:
-        # Get pixel size for OME-TIFF files
-        if tiff.ome_metadata is not None:
-            # Use regular expressions to extract PhysicalSizeX and PhysicalSizeY
-            physical_size_x_match = re.search(r'PhysicalSizeX="([^"]+)"', tiff.ome_metadata)
-            physical_size_y_match = re.search(r'PhysicalSizeY="([^"]+)"', tiff.ome_metadata)
-            # Check if matches were found and extract the values as floats
-            if physical_size_x_match:
-                x = float(physical_size_x_match.group(1))
-            else:
-                x = None
-            if physical_size_y_match:
-                y = float(physical_size_y_match.group(1))
-            else:
-                y = None
-        # Get pixel size for ImageJ-TIFF files
-        elif tiff.imagej_metadata is not None:
-            # Get tags
-            tags = tiff.pages[0].tags
-            # parse X, Y resolution
-            y = _xy_voxel_size(tags, 'YResolution')
-            x = _xy_voxel_size(tags, 'XResolution')
+    # # Open TIFF file
+    # with tifffile.TiffFile(filename) as tiff:
+    #     # Get pixel size for OME-TIFF files
+    #     if tiff.ome_metadata is not None:
+    #         # Use regular expressions to extract PhysicalSizeX and PhysicalSizeY
+    #         physical_size_x_match = re.search(r'PhysicalSizeX="([^"]+)"', tiff.ome_metadata)
+    #         physical_size_y_match = re.search(r'PhysicalSizeY="([^"]+)"', tiff.ome_metadata)
+    #         # Check if matches were found and extract the values as floats
+    #         if physical_size_x_match:
+    #             x = float(physical_size_x_match.group(1))
+    #         else:
+    #             x = None
+    #         if physical_size_y_match:
+    #             y = float(physical_size_y_match.group(1))
+    #         else:
+    #             y = None
+    #     # Get pixel size for ImageJ-TIFF files
+    #     elif tiff.imagej_metadata is not None:
+    #         # Get tags
+    #         tags = tiff.pages[0].tags
+    #         # parse X, Y resolution
+    #         y = _xy_voxel_size(tags, 'YResolution')
+    #         x = _xy_voxel_size(tags, 'XResolution')
+    #     else:
+    #         x = None
+    #         y = None
+    img = AICSImage(str(filename))
+    x = img.physical_pixel_sizes.X
+    y = img.physical_pixel_sizes.Y
+
+        
 
     # Check if x and y pixel sizes make sense
     if x is None or y is None:
