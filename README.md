@@ -46,8 +46,12 @@ Make sure to install all required tools before proceeding with the installation 
     ```
     git clone https://git.lobos.nih.gov/taraskalab/pyclem.git
     ```
+    or
+    ```
+    git clone https://github.com/andreasmarnold/pyclem.git
+    ```
 
-2. In Conda-prompt:
+3. In Conda-prompt:
    - Create a new virtual environment with Python>=3.10
     ```ruby
     conda create -y -n pyclem-env python=3.10
@@ -62,8 +66,9 @@ Make sure to install all required tools before proceeding with the installation 
     ```
    - Install the project with
     ```
-    python -m pip install .
+    python -m pip -e install .
     ```
+    The `-e` option allows you to edit the code and use it without needing to reinstall the package. 
    - Install pycoco tools separately from the official GitHub repository
     ```
     python -m pip install git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI
