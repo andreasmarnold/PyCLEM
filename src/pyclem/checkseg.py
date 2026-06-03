@@ -104,7 +104,7 @@ def checkseg_widget(
         try:
             # Open EM image as AICSImage object and display in viewer
             em_file = AICSImage(filename)
-            viewer.open(path=filename, plugin='napari-aicsimageio', name='EM image', interpolation2d='linear')
+            viewer.open(path=filename, name='EM image', interpolation2d='linear')
             # Get pixel size for EM image
             px_size = em_file.physical_pixel_sizes[-1]  # in µm
             checkseg_widget.px_size = px_size
