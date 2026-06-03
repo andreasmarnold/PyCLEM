@@ -9,6 +9,7 @@ os.environ.setdefault("MPLCONFIGDIR", "/tmp/pyclem-mpl")
 
 import numpy as np
 import tifffile
+from napari.components import ViewerModel
 from napari.layers import Image, Shapes
 
 
@@ -98,6 +99,34 @@ def test_checkseg_grid_and_mark_tile_smoke():
     )
     reset_view(viewer=fallback_viewer, center=(5, 5), size=tile_size_px)
     assert fallback_viewer.camera.zoom > 0
+
+
+def test_clear_layers_does_not_depend_on_selection_state():
+    from pyclem._napari import clear_layers
+
+    viewer = ViewerModel()
+    viewer.add_image(np.zeros((4, 4)), name="one")
+    viewer.add_image(np.ones((4, 4)), name="two")
+
+    clear_layers(viewer)
+
+    assert len(viewer.layers) == 0
+
+
+def test_remove_edge_features_replaces_shape_data_without_selection():
+    from pyclem.checkseg import remove_edge_features
+
+    keep = np.array([[1, 1], [1, 2], [2, 2]])
+    outside = np.array([[0, 0], [0, 5], [1, 5]])
+    overlap = np.array([[3, 3], [3, 4], [4, 4]])
+    layer = Shapes([keep, outside, overlap], shape_type="polygon", name="Features")
+    cellmask = np.zeros((5, 5), dtype=bool)
+    cellmask[3, 3] = True
+
+    remove_edge_features(cellmask=cellmask, feature_layer=layer)
+
+    assert len(layer.data) == 1
+    np.testing.assert_array_equal(layer.data[0], keep)
 
 
 def test_analysis_template_has_no_outputs():

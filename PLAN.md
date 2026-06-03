@@ -5,7 +5,7 @@
 - `napari-aicsimageio` has been removed from project dependencies and from the local `pyclem-n0.7.1` environment.
 - Package code no longer hard-codes `plugin='napari-aicsimageio'`; current source uses napari reader auto-discovery for display.
 - Keep `AICSImage` for pyclem internal data and metadata reads for now.
-- Current verification passes: `pytest -q` reports 8 tests passing, and `python -m pip check` reports no broken requirements.
+- Current verification passes: `pytest -q` reports 10 tests passing, and `python -m pip check` reports no broken requirements.
 - Real desktop napari smoke checks on `DISPLAY=:0` pass for the smaller fixture. Full Viewer rendering opens the EM TIFF. `checkseg_widget` Start loads EM image, cellmask, grid, progress map, shape layers, and existing progress state; Save Mask and Finish writes a scratch-copy checked mask and resets the viewer. `cellmask_widget` Start loads/rescales the EM image plus prior cellmask; Finish and Save writes a scratch-copy cellmask and resets the viewer.
 - Larger fixture stress checks pass on `DISPLAY=:0` using scratch copies for write paths. `checkseg_widget` loaded the 27170x27170 EM image, cellmask, grid, progress map, 89 flats, 11 domes, and 26 spheres in about 21 seconds, then Save Mask and Finish recreated the checked mask and reset the viewer in about 167 seconds. `cellmask_widget` loaded and rescaled the larger EM image and prior cellmask to 3222x3222 display layers in about 54 seconds, then Finish and Save wrote the full-resolution cellmask and reset the viewer in about 13 seconds.
 
@@ -26,7 +26,8 @@
 
 ## Remaining Risks
 - Full `napari.Viewer` rendering works in the current desktop session using `DISPLAY=:0`; it still cannot be validated from a purely headless shell without a real display or Xvfb.
-- `checkseg.py` still uses fragile/private napari-facing APIs such as `viewer._canvas_size`, `layer.source.path`, `selected_data`, `remove_selected`, magicgui `_call_button`, shape CSV `layer.save`, and `interpolation2d`.
+- `checkseg.py` and `cellmask.py` now clear layers without depending on selection state, and `checkseg.py` isolates canvas-size lookup behind a compatibility helper.
+- Remaining fragile/private napari-facing APIs include magicgui `_call_button`, shape CSV `layer.save`, and `interpolation2d`.
 - PyQt5 is intentionally retained for this branch; PyQt6 should be a later, separate migration if needed.
 
 ## Next Steps

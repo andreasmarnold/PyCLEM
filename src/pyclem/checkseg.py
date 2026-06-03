@@ -8,6 +8,7 @@ import napari
 import numpy as np
 from aicsimageio import AICSImage
 from magicgui import magicgui
+from pyclem._napari import clear_layers, viewer_canvas_size
 from pyclem.utils import (handle_overlaps,
                           separate_mask_features,
                           shapes_to_mask,
@@ -281,8 +282,7 @@ def checkseg_widget(
         # Reset viewer for next run
         print('Resetting viewer...')
         # Delete all existing layers
-        viewer.layers.select_all()
-        viewer.layers.remove_selected()
+        clear_layers(viewer)
         # Set created attributes back to None
         checkseg_widget.ind = 0
         checkseg_widget.tile_size_px = None
@@ -385,24 +385,6 @@ def mark_tile(layer: 'napari.Layer', center: Tuple[Union[float, int], Union[floa
     layer.data = data
 
 
-def _viewer_canvas_size(viewer: 'napari.Viewer') -> np.ndarray:
-    """
-    Return the viewer canvas size while isolating napari private API access.
-    """
-    canvas_size = getattr(viewer, '_canvas_size', None)
-    if canvas_size is not None:
-        return np.asarray(canvas_size)
-
-    window = getattr(viewer, 'window', None)
-    qt_viewer = getattr(window, 'qt_viewer', None) or getattr(window, '_qt_viewer', None)
-    canvas = getattr(qt_viewer, 'canvas', None)
-    canvas_size = getattr(canvas, 'size', None)
-    if canvas_size is not None:
-        return np.asarray(canvas_size)
-
-    return np.asarray((1000, 1000))
-
-
 def reset_view(viewer: 'napari.Viewer', center: Tuple[Union[float, int], Union[float, int]],
                size: Union[float, int], scale: Tuple[Union[float, int], Union[float, int]] = None) -> None:
     """
@@ -440,7 +422,7 @@ def reset_view(viewer: 'napari.Viewer', center: Tuple[Union[float, int], Union[f
     # Set zoom to include area of 1.2 * size
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        canvas_size = _viewer_canvas_size(viewer)
+        canvas_size = viewer_canvas_size(viewer)
         zoom_scaling = np.mean(scale)  # Todo: Check if there is a better way to implement scaling
     viewer.camera.zoom = np.min(canvas_size) / np.max(1.2 * size * zoom_scaling)
 
@@ -661,20 +643,19 @@ def remove_edge_features(cellmask: np.ndarray, feature_layer: 'napari.Layer'):
     cellmask = cellmask.astype(bool)
     y, x = np.squeeze(cellmask.shape)
 
-    # Prepare logical list for overlaps (rows: features)
-    is_edge_feature = []
+    kept_features = []
     # Loop over features
-    for f, feature in enumerate(feature_layer.data):
+    for feature in feature_layer.data:
         # Get pixel coordinates for this feature
         feature_px = feature.astype(int)
         # Check if any of the feature pixels are outside the image or inside the cellmask
-        if (np.any(feature_px[:, 0] < 0) or np.any(feature_px[:, 0] > y) or
-                np.any(feature_px[:, 1] < 0) or np.any(feature_px[:, 1] > x) or
-                np.any(cellmask[feature_px[:, 0], feature_px[:, 1]])):
-            # Select feature for removal
-            feature_layer.selected_data.add(f)
-    # Remove edge features
-    feature_layer.remove_selected()
+        outside_image = (np.any(feature_px[:, 0] < 0) or np.any(feature_px[:, 0] >= y) or
+                         np.any(feature_px[:, 1] < 0) or np.any(feature_px[:, 1] >= x))
+        overlaps_cellmask = False if outside_image else np.any(cellmask[feature_px[:, 0], feature_px[:, 1]])
+        if not (outside_image or overlaps_cellmask):
+            kept_features.append(feature)
+    # Replace data directly to avoid relying on napari selection state.
+    feature_layer.data = kept_features
 
 
 def prep_for_gui(files: Union[List[Union[str, Path]], str, Path], parent_folder: Union[str, Path],

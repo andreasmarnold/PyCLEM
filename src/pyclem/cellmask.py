@@ -7,6 +7,7 @@ from aicsimageio.writers import OmeTiffWriter
 from magicgui import magicgui
 from skimage import transform
 
+from pyclem._napari import clear_layers
 from pyclem.utils import shapes_to_mask
 
 
@@ -116,8 +117,7 @@ def cellmask_widget(viewer: 'napari.viewer.Viewer',
                            physical_pixel_sizes=cellmask_widget.im_file.physical_pixel_sizes, overwrite_file=True)
 
         # Delete all layers
-        viewer.layers.select_all()
-        viewer.layers.remove_selected()
+        clear_layers(viewer)
         # Reset image and cellmask to None
         cellmask_widget.im_file = None
         cellmask_widget.cellmask_file = None
