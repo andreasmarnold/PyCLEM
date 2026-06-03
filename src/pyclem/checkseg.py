@@ -185,7 +185,7 @@ def checkseg_widget(
                   center=checkseg_widget.centers[checkseg_widget.ind],
                   size=checkseg_widget.tile_size_px)
         # Save feature shapes
-        fn = Path(viewer.layers['EM image'].source.path)
+        fn = Path(filename)
         save_shapes(em_fn=fn,
                     domes_layer=viewer.layers['Domes'],
                     flats_layer=viewer.layers['Flats'],
@@ -246,7 +246,7 @@ def checkseg_widget(
 
         # Save feature shapes
         print('Saving segmentation shapes ...')
-        fn = Path(viewer.layers['EM image'].source.path)
+        fn = Path(filename)
         save_shapes(em_fn=fn,
                     domes_layer=viewer.layers['Domes'],
                     flats_layer=viewer.layers['Flats'],
@@ -385,6 +385,24 @@ def mark_tile(layer: 'napari.Layer', center: Tuple[Union[float, int], Union[floa
     layer.data = data
 
 
+def _viewer_canvas_size(viewer: 'napari.Viewer') -> np.ndarray:
+    """
+    Return the viewer canvas size while isolating napari private API access.
+    """
+    canvas_size = getattr(viewer, '_canvas_size', None)
+    if canvas_size is not None:
+        return np.asarray(canvas_size)
+
+    window = getattr(viewer, 'window', None)
+    qt_viewer = getattr(window, 'qt_viewer', None) or getattr(window, '_qt_viewer', None)
+    canvas = getattr(qt_viewer, 'canvas', None)
+    canvas_size = getattr(canvas, 'size', None)
+    if canvas_size is not None:
+        return np.asarray(canvas_size)
+
+    return np.asarray((1000, 1000))
+
+
 def reset_view(viewer: 'napari.Viewer', center: Tuple[Union[float, int], Union[float, int]],
                size: Union[float, int], scale: Tuple[Union[float, int], Union[float, int]] = None) -> None:
     """
@@ -412,6 +430,8 @@ def reset_view(viewer: 'napari.Viewer', center: Tuple[Union[float, int], Union[f
     """
     if scale is None:
         scale = (1, 1)
+    center = np.asarray(center)
+    scale = np.asarray(scale)
     if viewer.dims.ndisplay != 2:
         return  # Todo: Make this work for n-dimensional images? (e.g. 3D)
         #          For insights, see https://github.com/jni/affinder
@@ -420,7 +440,7 @@ def reset_view(viewer: 'napari.Viewer', center: Tuple[Union[float, int], Union[f
     # Set zoom to include area of 1.2 * size
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        canvas_size = viewer._canvas_size
+        canvas_size = _viewer_canvas_size(viewer)
         zoom_scaling = np.mean(scale)  # Todo: Check if there is a better way to implement scaling
     viewer.camera.zoom = np.min(canvas_size) / np.max(1.2 * size * zoom_scaling)
 

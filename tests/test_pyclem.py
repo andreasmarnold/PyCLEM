@@ -89,6 +89,16 @@ def test_checkseg_grid_and_mark_tile_smoke():
     reset_view(viewer=viewer, center=centers[0], size=tile_size_px)
     assert viewer.camera.zoom > 0
 
+    fallback_viewer = SimpleNamespace(
+        dims=SimpleNamespace(ndisplay=2),
+        camera=SimpleNamespace(center=None, zoom=None),
+        window=SimpleNamespace(
+            qt_viewer=SimpleNamespace(canvas=SimpleNamespace(size=(120, 80)))
+        ),
+    )
+    reset_view(viewer=fallback_viewer, center=(5, 5), size=tile_size_px)
+    assert fallback_viewer.camera.zoom > 0
+
 
 def test_analysis_template_has_no_outputs():
     import json
