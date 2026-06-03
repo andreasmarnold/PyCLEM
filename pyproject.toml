@@ -21,7 +21,7 @@ name = "pyclem"
 dynamic = ["version"]
 description = "Package containing tools and napari-widgets for manual correction and analysis of RGB-segmentation masks as used in the analysis of CLEM experiments."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "BSD-3-Clause" }
 authors = [{ name = "Andreas M Arnold", email = "andreas.m.arnold@gmail.com" }]
 # https://pypi.org/classifiers/
@@ -29,7 +29,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -49,17 +48,18 @@ dependencies = [
     "keras==2.14.0",
     "matplotlib==3.7.1",
     "mask-rcnn-tf2 @ git+https://github.com/z-mahmud22/Mask-RCNN_TF2.14.0.git",
-    "napari==0.5.5",
+    "napari==0.7.1rc2",
     #"napari @ git+https://github.com/napari/napari.git",
-    "napari-aicsimageio",
-    "numpy==1.23.5",
+    "napari-bioio-reader>=0.3.0",
+    "numpy==1.26.4",
     "opencv-contrib-python==4.8.0.76",
     "opencv-python==4.8.0.76",
     "pandas",
-    "pillow==9.4.0",
+    "pillow>=10.0,<13",
+    "pydantic<2.14",
     "PyQt5",
-    "scikit-image==0.19.3",
-    "scipy==1.11.3",
+    "scikit-image>=0.21,<0.26",
+    "scipy>=1.14.0,<2",
     "shapely",
     "tensorboard==2.14.1",
     "tensorflow[and-cuda]==2.14.0",
@@ -150,7 +150,10 @@ pretty = true
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["tests"]
-filterwarnings = ["error"]
+filterwarnings = [
+    "error",
+    "ignore:`json_encoders` is deprecated.*:pydantic.warnings.PydanticDeprecatedSince20",
+]
 
 # https://coverage.readthedocs.io/en/6.4/config.html
 [tool.coverage.report]
