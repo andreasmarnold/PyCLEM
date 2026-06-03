@@ -30,7 +30,7 @@ command = 'evaluate'  # 'train' or 'evaluate'
 # Regular expression pattern to load tiled images
 FILE_EXT = 'x[0-9][0-9][0-9]y[0-9][0-9][0-9].tif'
 # Directory to save logs and model checkpoints
-default_dataset_year = "2025"
+default_dataset_year = "2026"
 # Default limit for number of images to analyze with Mask R-CNN (???)
 im_limit = 500
 # Number of GPUs to be used

@@ -328,7 +328,7 @@ def run_segmentation(args):
     print("GPU: ", args.gpu)
 
     matplotlib.get_backend()
-    matplotlib.use("TkAgg")
+    #matplotlib.use("TkAgg")
 
     if args.gpu == '0':
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
