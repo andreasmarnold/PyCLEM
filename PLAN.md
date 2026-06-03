@@ -13,8 +13,10 @@
 - `napari-bioio-reader` works for napari model-level reader discovery in tests.
 - Do not migrate internal `AICSImage` usage to `BioImage` yet.
 - Generated TIFF/OME-TIFF parity matched only after adding `bioio-tifffile` and `bioio-ome-tiff`, but those packages require a newer `tifffile` than `aicsimageio==4.14.0` allows.
+- Real fixture parity also matched after temporarily adding `bioio-tifffile==1.3.0` and `bioio-ome-tiff==1.4.0`: the smaller fixture matched by full array equality for EM image, cellmask, segmask, and checked segmask; the larger fixture matched by shape, dtype, dimensions, scenes, physical pixel sizes, and sampled data blocks.
 - Real EM/CLEM checks now cover the local smaller fixture with `AICSImage`, napari auto-open via `ViewerModel`, previous shape CSVs, segprotocol, grid/progress helpers, and metadata for the larger fixture.
 - Explicit `plugin='napari-bioio-reader'` still fails on the real TIFF fixtures in the clean environment because `BioImage` routes through Bio-Formats and Java is not available/cached. Keep napari reader auto-discovery for display and keep `AICSImage` for pyclem-owned reads.
+- `BioImage` is technically compatible with the current real TIFF fixtures only when the optional bioio TIFF readers are installed. Those readers currently force a `tifffile` version that conflicts with `aicsimageio==4.14.0`, so removing `aicsimageio` would need to be a separate dependency migration.
 - Java/Bio-Formats is optional for this branch. It is not required for the current pyclem TIFF workflows. It is only needed when explicitly forcing `napari-bioio-reader` / `bioio-bioformats` or reading formats that require Bio-Formats; that path also needs scyjava configured to use system Java and a writable/pre-populated Maven cache.
 
 ## Local Data
@@ -28,6 +30,6 @@
 - PyQt5 is intentionally retained for this branch; PyQt6 should be a later, separate migration if needed.
 
 ## Next Steps
-- Run `AICSImage` vs `BioImage` parity on real files before deciding whether to remove `aicsimageio`.
+- Treat any removal of `aicsimageio` as a separate migration: add the optional bioio TIFF readers, resolve the `tifffile` dependency conflict, and rerun real-data/widget checks.
 - Add Xvfb or another virtual display only if automated full-viewer tests are needed.
 - Continue replacing or isolating fragile napari API usage after real workflow testing identifies actual breakage.
