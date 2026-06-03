@@ -792,6 +792,13 @@ def mrcnn_assemble_mask(im_size: Tuple[int, int],
                 sphere_local = binary_closing(image=sphere_local, footprint=struct_el)
                 # Remove features that are touching the border
                 sphere_local = clear_border(sphere_local)
+            # Edge tiles can be smaller than xy_size, while Mask R-CNN may still emit
+            # full-size masks. Crop local masks to the actual slice shape before merging.
+            tile_height = y_end - y_start
+            tile_width = x_end - x_start
+            dome_local = dome_local[:tile_height, :tile_width]
+            flat_local = flat_local[:tile_height, :tile_width]
+            sphere_local = sphere_local[:tile_height, :tile_width]
             # Add features from current tile to full masks
             dome[y_start:y_end, x_start:x_end] = dome[y_start:y_end, x_start:x_end] | dome_local
             flat[y_start:y_end, x_start:x_end] = flat[y_start:y_end, x_start:x_end] | flat_local
