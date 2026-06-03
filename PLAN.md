@@ -7,7 +7,7 @@
 - Keep `AICSImage` for pyclem internal data and metadata reads for now.
 - Current verification passes: `pytest -q` reports 8 tests passing, and `python -m pip check` reports no broken requirements.
 - Real desktop napari smoke checks on `DISPLAY=:0` pass for the smaller fixture. Full Viewer rendering opens the EM TIFF. `checkseg_widget` Start loads EM image, cellmask, grid, progress map, shape layers, and existing progress state; Save Mask and Finish writes a scratch-copy checked mask and resets the viewer. `cellmask_widget` Start loads/rescales the EM image plus prior cellmask; Finish and Save writes a scratch-copy cellmask and resets the viewer.
-- Larger fixture Start-path stress checks pass on `DISPLAY=:0`. `checkseg_widget` loaded the 27170x27170 EM image, cellmask, grid, progress map, 89 flats, 11 domes, and 26 spheres in about 20 seconds. `cellmask_widget` loaded and rescaled the larger EM image and prior cellmask to 3222x3222 display layers in about 55 seconds. Save/finish paths were not run on the larger fixture.
+- Larger fixture stress checks pass on `DISPLAY=:0` using scratch copies for write paths. `checkseg_widget` loaded the 27170x27170 EM image, cellmask, grid, progress map, 89 flats, 11 domes, and 26 spheres in about 21 seconds, then Save Mask and Finish recreated the checked mask and reset the viewer in about 167 seconds. `cellmask_widget` loaded and rescaled the larger EM image and prior cellmask to 3222x3222 display layers in about 54 seconds, then Finish and Save wrote the full-resolution cellmask and reset the viewer in about 13 seconds.
 
 ## Reader Outcome
 - `napari-bioio-reader` works for napari model-level reader discovery in tests.
@@ -20,7 +20,7 @@
 ## Local Data
 - `tests/data/` is ignored locally and contains real package inputs/outputs for manual validation.
 - `tests/data/smaller_file_size/` is the first reader/workflow fixture set. It includes the EM image, cell mask, segmentation masks, shape CSVs for domes/flats/spheres, feature stats, and segprotocol. Use this first for `AICSImage` vs `BioImage` parity and end-to-end `checkseg` smoke testing.
-- `tests/data/bigger_file_size/` is the stress/performance fixture set. It includes the original EM image, previous outputs, and a very large segmentation mask. Current tests inspect TIFF metadata only, while manual Start-path checks cover large-file loading and rescaling.
+- `tests/data/bigger_file_size/` is the stress/performance fixture set. It includes the original EM image, previous outputs, and a very large segmentation mask. Current tests inspect TIFF metadata only, while manual scratch-copy checks cover large-file loading, rescaling, and save/finish behavior.
 
 ## Remaining Risks
 - Full `napari.Viewer` rendering works in the current desktop session using `DISPLAY=:0`; it still cannot be validated from a purely headless shell without a real display or Xvfb.
@@ -28,7 +28,6 @@
 - PyQt5 is intentionally retained for this branch; PyQt6 should be a later, separate migration if needed.
 
 ## Next Steps
-- If needed, test larger fixture save/finish paths on a scratch copy only; do not write over the ignored source fixture.
 - Run `AICSImage` vs `BioImage` parity on real files before deciding whether to remove `aicsimageio`.
 - Add Xvfb or another virtual display only if automated full-viewer tests are needed.
 - Continue replacing or isolating fragile napari API usage after real workflow testing identifies actual breakage.
