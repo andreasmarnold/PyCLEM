@@ -8,7 +8,7 @@ import napari
 import numpy as np
 from aicsimageio import AICSImage
 from magicgui import magicgui
-from pyclem._napari import clear_layers, viewer_canvas_size
+from pyclem._napari import call_button_text, clear_layers, set_call_button_text, viewer_canvas_size
 from pyclem.utils import (handle_overlaps,
                           separate_mask_features,
                           shapes_to_mask,
@@ -61,7 +61,7 @@ def checkseg_widget(
         checkseg_widget.__annotations__['px_size'] = None
 
     # Get current button mode
-    mode = checkseg_widget._call_button.text
+    mode = call_button_text(checkseg_widget)
 
     if mode == 'Start':
         # Lock all widgets except the button
@@ -167,7 +167,7 @@ def checkseg_widget(
                        size=checkseg_widget.tile_size_px,
                        scale=viewer.layers['EM image'].scale)
             # Change the button/mode for next run
-            checkseg_widget._call_button.text = 'Next'
+            set_call_button_text(checkseg_widget, 'Next')
         else:
             # Center view on whole image
             reset_view(viewer=viewer,
@@ -178,7 +178,7 @@ def checkseg_widget(
             viewer.layers['Grid'].visible = False
             viewer.layers['Progress map'].visible = False
             # Change the button/mode for next run
-            checkseg_widget._call_button.text = 'Save Mask and Finish'
+            set_call_button_text(checkseg_widget, 'Save Mask and Finish')
 
     elif mode == 'Next':
         # Mark last tile as done in progress map
@@ -227,7 +227,7 @@ def checkseg_widget(
                        size=np.max(viewer.layers['EM image'].data.shape[-2:]),
                        scale=viewer.layers['EM image'].scale)
             # change the button/mode for next run
-            checkseg_widget._call_button.text = 'Save Mask and Finish'
+            set_call_button_text(checkseg_widget, 'Save Mask and Finish')
 
     elif mode == 'Save Mask and Finish':
         # Translate minimal feature size to pixels
@@ -295,7 +295,7 @@ def checkseg_widget(
         checkseg_widget['redo'].enabled = True
 
         # Reset button/mode to 'Start'
-        checkseg_widget._call_button.text = 'Start'
+        set_call_button_text(checkseg_widget, 'Start')
         print('Done!')
 
 
@@ -532,8 +532,11 @@ def save_shapes(em_fn: Union[str, Path],  domes_layer: 'napari.Layer',
     em_fn = Path(em_fn)
     # Save Napari shapes layers
     for layer in [domes_layer, flats_layer, spheres_layer]:
+        path = em_fn.with_name(em_fn.stem + f'_shapes_{layer.name.lower()}.csv')
         if layer.data:
-            layer.save(em_fn.with_name(em_fn.stem + f'_shapes_{layer.name.lower()}.csv').as_posix())
+            layer.save(path.as_posix())
+        else:
+            path.unlink(missing_ok=True)
 
 
 def save_progress(fn_protocol: Union[Path, str], current_ind: int, tile_size: int) -> None:

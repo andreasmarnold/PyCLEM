@@ -33,3 +33,25 @@ def viewer_canvas_size(viewer: Any) -> np.ndarray:
         return np.asarray(canvas_size)
 
     return np.asarray((1000, 1000))
+
+
+def call_button_text(widget: Any) -> str:
+    """
+    Return a magicgui widget call-button label.
+    """
+    return _call_button(widget).text
+
+
+def set_call_button_text(widget: Any, text: str) -> None:
+    """
+    Set a magicgui widget call-button label.
+    """
+    _call_button(widget).text = text
+
+
+def _call_button(widget: Any) -> Any:
+    call_button = getattr(widget, "call_button", None)
+    if call_button is not None:
+        return call_button
+
+    return widget._call_button

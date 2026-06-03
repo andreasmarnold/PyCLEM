@@ -7,7 +7,7 @@ from aicsimageio.writers import OmeTiffWriter
 from magicgui import magicgui
 from skimage import transform
 
-from pyclem._napari import clear_layers
+from pyclem._napari import call_button_text, clear_layers, set_call_button_text
 from pyclem.utils import shapes_to_mask
 
 
@@ -63,7 +63,7 @@ def cellmask_widget(viewer: 'napari.viewer.Viewer',
         cellmask_widget.__annotations__['cellmask_file'] = None
 
     # Get current button mode
-    mode = cellmask_widget._call_button.text
+    mode = call_button_text(cellmask_widget)
 
     if mode == 'Start':
         # Load image as AICSImage
@@ -95,7 +95,7 @@ def cellmask_widget(viewer: 'napari.viewer.Viewer',
         viewer.add_shapes(name='Cell Mask', shape_type='polygon', edge_width=10, edge_color='white',
                           face_color='white')
         # Change the button/mode for next run
-        cellmask_widget._call_button.text = 'Finish and Save'
+        set_call_button_text(cellmask_widget, 'Finish and Save')
 
     elif mode == 'Finish and Save':
         # # Save cell outline as polygon with numpy
@@ -122,7 +122,7 @@ def cellmask_widget(viewer: 'napari.viewer.Viewer',
         cellmask_widget.im_file = None
         cellmask_widget.cellmask_file = None
         # change the button/mode for next run
-        cellmask_widget._call_button.text = 'Start'
+        set_call_button_text(cellmask_widget, 'Start')
 
 
 if __name__ == '__main__':

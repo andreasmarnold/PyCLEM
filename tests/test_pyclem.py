@@ -113,6 +113,20 @@ def test_clear_layers_does_not_depend_on_selection_state():
     assert len(viewer.layers) == 0
 
 
+def test_magicgui_call_button_helpers_use_public_button():
+    from pyclem._napari import call_button_text, set_call_button_text
+    from pyclem.cellmask import cellmask_widget
+
+    original_text = call_button_text(cellmask_widget)
+
+    try:
+        set_call_button_text(cellmask_widget, "Finish and Save")
+        assert call_button_text(cellmask_widget) == "Finish and Save"
+        assert cellmask_widget.call_button.text == "Finish and Save"
+    finally:
+        set_call_button_text(cellmask_widget, original_text)
+
+
 def test_remove_edge_features_replaces_shape_data_without_selection():
     from pyclem.checkseg import remove_edge_features
 
@@ -127,6 +141,65 @@ def test_remove_edge_features_replaces_shape_data_without_selection():
 
     assert len(layer.data) == 1
     np.testing.assert_array_equal(layer.data[0], keep)
+
+
+def test_save_shapes_roundtrips_napari_csv(tmp_path):
+    from napari.plugins import _initialize_plugins
+
+    from pyclem.checkseg import save_shapes
+
+    _initialize_plugins()
+
+    viewer = ViewerModel()
+    domes = viewer.add_shapes(
+        [np.array([[1.5, 2.0], [3.0, 4.5], [5.5, 2.5]])],
+        shape_type="polygon",
+        name="Domes",
+    )
+    flats = viewer.add_shapes(
+        [np.array([[10.0, 20.5], [11.0, 22.0], [12.5, 21.0]])],
+        shape_type="polygon",
+        name="Flats",
+    )
+    spheres = viewer.add_shapes(
+        [np.array([[30.0, 40.0], [30.0, 41.0], [31.0, 41.0]])],
+        shape_type="polygon",
+        name="Spheres",
+    )
+    em_path = tmp_path / "sample_inv.tif"
+
+    save_shapes(em_path, domes, flats, spheres)
+
+    for name, source in [("domes", domes), ("flats", flats), ("spheres", spheres)]:
+        path = tmp_path / f"sample_inv_shapes_{name}.csv"
+        reopened = ViewerModel().open(path, layer_type="shapes", name=name.capitalize())[0]
+
+        assert len(reopened.data) == len(source.data)
+        np.testing.assert_array_equal(reopened.data[0], source.data[0])
+
+
+def test_save_shapes_removes_stale_csv_for_empty_layers(tmp_path):
+    from pyclem.checkseg import save_shapes
+
+    viewer = ViewerModel()
+    domes = viewer.add_shapes(shape_type="polygon", name="Domes")
+    flats = viewer.add_shapes(
+        [np.array([[10.0, 20.5], [11.0, 22.0], [12.5, 21.0]])],
+        shape_type="polygon",
+        name="Flats",
+    )
+    spheres = viewer.add_shapes(shape_type="polygon", name="Spheres")
+    em_path = tmp_path / "sample_inv.tif"
+    stale_domes = tmp_path / "sample_inv_shapes_domes.csv"
+    stale_spheres = tmp_path / "sample_inv_shapes_spheres.csv"
+    stale_domes.write_text("stale")
+    stale_spheres.write_text("stale")
+
+    save_shapes(em_path, domes, flats, spheres)
+
+    assert not stale_domes.exists()
+    assert (tmp_path / "sample_inv_shapes_flats.csv").exists()
+    assert not stale_spheres.exists()
 
 
 def test_analysis_template_has_no_outputs():
